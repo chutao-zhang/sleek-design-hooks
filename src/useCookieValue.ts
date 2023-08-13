@@ -20,7 +20,7 @@ interface IRemoveOptions {
 }
 
 type SetCookieFunc = (value: string, options?: ICookieOptions) => void;
-type RemoveCookieFunc = (name: string, options?: IRemoveOptions) => void;
+type RemoveCookieFunc = (options?: IRemoveOptions) => void;
 
 function formatOptions(options: ICookieOptions): string {
     if (!options) {
@@ -94,7 +94,7 @@ function useCookieValue(name: string) {
         return decodeURIComponent(document.cookie).match(new RegExp(`(^| )${name}=([^;]*)(;|$)`))?.[2] || null;
     }
 
-    function removeCookie(name: string, options?: IRemoveOptions): void {
+    function removeCookie(options?: IRemoveOptions): void {
         setCookie(name, { ...options, expires: -1 })
     }
 
