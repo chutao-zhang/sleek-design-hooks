@@ -17,12 +17,12 @@ interface ICookieProps extends ICookieOptions {
     value: string;
 }
 
-interface IDeleteOptions {
+interface IRemoveOptions {
     path?: string;
     domain?: string;
 }
 
-interface IDeleteProps extends IDeleteOptions {
+interface IRemoveProps extends IRemoveOptions {
     name: string;
 }
 
@@ -100,13 +100,12 @@ function useCookie() {
     const support = !!(window || document);
     const enabled = support && window.navigator.cookieEnabled;
 
-    if (!enabled) {
-        throw new Error("Cookie Error: Your browser has disabled cookie, please enable it in settings.");
-
-    }
-
     if (!support) {
         throw new Error("Cookie Error: Your browser does not support cookie.");
+    }
+
+    if (!enabled) {
+        console.error("Cookie Error: Your browser has disabled cookie, please enable it in settings.");
     }
 
     /** 获取cookie */
@@ -158,7 +157,7 @@ function useCookie() {
         function setSingleCookie(props: ICookieProps): void {
             const { name, value, ...options } = props;
             const formattedOptions = formatCookieOptions(options);
-            document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; ${formattedOptions}`;
+            document.cookie = `${name}=${value}; ${formattedOptions}`;
         }
 
         if (typeof args === 'string' && value) {
@@ -174,14 +173,14 @@ function useCookie() {
     }
 
     /** 删除cookie */
-    function removeCookie(name: string, options?: IDeleteOptions): void;
-    function removeCookie(args: IDeleteProps[]): void;
-    function removeCookie(args: string | IDeleteProps[], options?: IDeleteOptions): void {
+    function removeCookie(name: string, options?: IRemoveOptions): void;
+    function removeCookie(args: IRemoveProps[]): void;
+    function removeCookie(args: string | IRemoveProps[], options?: IRemoveOptions): void {
         if (!support || !enabled) return;
 
-        function removeSingleCookie(name: string, options?: IDeleteOptions): void {
+        function removeSingleCookie(name: string, options?: IRemoveOptions): void {
             const { path, domain } = options || {};
-            document.cookie = `${encodeURIComponent(name)}=; expires=Thu, 01 Jan 1970 00:00:00 GMT${path ? `; path=${path}` : ''}${domain ? `; domain=${domain}` : ''}`;
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT${path ? `; path=${path}` : ''}${domain ? `; domain=${domain}` : ''}`;
         }
 
         if (typeof args === 'string') {
