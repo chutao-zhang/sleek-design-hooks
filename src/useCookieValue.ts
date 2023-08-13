@@ -1,4 +1,4 @@
-import * as React from "react";
+import { useState } from "react";
 
 interface ICookieOptions {
     /** number（秒）| Date */
@@ -73,7 +73,7 @@ function formatOptions(options: ICookieOptions): string {
 function useCookieValue(name: string) {
     const support = !!(window || document);
     const enabled = support && window.navigator.cookieEnabled;
-    const [value, setValue] = React.useState<string | null>(getCookie(name));
+    const [value, setValue] = useState<string | null>(getCookie(name));
 
     if (!support) {
         throw new Error("Cookie Error: Your browser does not support cookie.");
