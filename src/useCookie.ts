@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 interface ICookieOptions {
     /** number（秒）| Date */
     expires?: number | Date;
@@ -11,22 +13,27 @@ interface ICookieOptions {
     priority?: "High" | "Medium" | "Low";
     size?: number;
 }
-
 interface ICookieProps extends ICookieOptions {
     name: string;
     value: string;
 }
-
-interface IRemoveOptions {
+interface IRemoveCookieOptions {
     path?: string;
     domain?: string;
 }
-
-interface IRemoveProps extends IRemoveOptions {
+interface IRemoveCookieProps extends IRemoveCookieOptions {
     name: string;
 }
-
-type NameAliasType = { name: string; alias?: string };
+type SetCookieFunc = {
+    (name: string, value: string, options?: ICookieOptions): void;
+    (props: ICookieProps | ICookieProps[]): void;
+}
+type RemoveCookieFunc = {
+    (name: string, options?: IRemoveCookieOptions): void;
+    (args: Array<string | IRemoveCookieProps>): void;
+};
+type ClearCookieFunc = () => void;
+type UseCookieReturn = [Record<string, string>, SetCookieFunc, RemoveCookieFunc, ClearCookieFunc];
 
 /** cookie字符串转object
  * @param cookieStr cookie字符串
@@ -45,7 +52,7 @@ function parseCookies(cookieStr: string) {
         cookies[key] = value;
     }
 
-    return cookiePairs.length === 0 ? null : cookies;
+    return cookies;
 }
 
 function formatCookieOptions(options?: ICookieOptions): string {
@@ -96,64 +103,38 @@ function formatCookieOptions(options?: ICookieOptions): string {
     return parts.join('; ');
 }
 
-function useCookie() {
-    const support = !!(window || document);
-    const enabled = support && window.navigator.cookieEnabled;
-
-    if (!support) {
-        throw new Error("Cookie Error: Your browser does not support cookie.");
-    }
-
-    if (!enabled) {
-        console.error("Cookie Error: Your browser has disabled cookie, please enable it in settings.");
-    }
+function useCookie(): UseCookieReturn;
+function useCookie(name: string): UseCookieReturn;
+function useCookie(names: string[]): UseCookieReturn;
+function useCookie(args?: string | string[]): UseCookieReturn {
+    const names = Array.isArray(args) ? args : (args && [args] || undefined);
+    const [values, setValues] = useState(getCookie(names));
 
     /** 获取cookie */
-    function getCookie(): Record<string, string | undefined> | null;
-    function getCookie(args: string): string | null;
-    function getCookie(args: string[] | NameAliasType[]): Record<string, string | undefined> | null;
-    function getCookie(args?: string | string[] | NameAliasType[]): string | Record<string, string | undefined> | null {
-        if (!support || !enabled) return null;
-
+    function getCookie(args?: string[]): Record<string, string> {
         const _cookies = document.cookie;
 
         if (typeof args === "undefined") {
             return parseCookies(_cookies);
-        }
-
-        if (typeof args === "string") {
-            return _cookies.match(new RegExp(`(^| )${args}=([^;]*)(;|$)`))?.[2] || null;
-        }
-
-        if (Object.prototype.toString.call(args) === "[object Array]") {
-            const obj: Record<string, string | undefined> = {};
+        } else if (Array.isArray(args)) {
+            const result: Record<string, string> = {};
 
             args.forEach((item) => {
-                if (typeof item === "string") {
-                    obj[item] = _cookies.match(
-                        new RegExp(`(^| )${item}=([^;]*)(;|$)`)
-                    )?.[2];
-                }
-
-                if (typeof item === "object" && item !== null) {
-                    obj[item.alias || item.name] = _cookies.match(
-                        new RegExp(`(^| )${item.name}=([^;]*)(;|$)`)
-                    )?.[2];
-                }
+                result[item] = _cookies.match(
+                    new RegExp(`(^| )${item}=([^;]*)(;|$)`)
+                )?.[2] || '';
             });
 
-            return Object.fromEntries(Object.entries(obj).filter(([_, value]) => value !== undefined));
+            return result;
         }
 
-        return null;
+        return {};
     }
 
     /** 设置cookie */
     function setCookie(name: string, value: string, options?: ICookieOptions): void;
     function setCookie(props: ICookieProps | ICookieProps[]): void;
     function setCookie(args: string | ICookieProps | ICookieProps[], value?: string, options?: ICookieOptions): void {
-        if (!support || !enabled) return;
-
         function setSingleCookie(props: ICookieProps): void {
             const { name, value, ...options } = props;
             const formattedOptions = formatCookieOptions(options);
@@ -164,52 +145,48 @@ function useCookie() {
             const cookieProps: ICookieProps = { name: args, value, ...options };
             setCookie([cookieProps]);
         } else if (Array.isArray(args)) {
-            const cookies = args.map(cookieProps => {
+            args.forEach(cookieProps => {
                 setSingleCookie(cookieProps);
             });
+            setValues(getCookie(names));
         } else if (typeof args === 'object') {
             setSingleCookie(args);
+            setValues(getCookie(names));
         }
     }
 
     /** 删除cookie */
-    function removeCookie(name: string, options?: IRemoveOptions): void;
-    function removeCookie(args: IRemoveProps[]): void;
-    function removeCookie(args: string | IRemoveProps[], options?: IRemoveOptions): void {
-        if (!support || !enabled) return;
-
-        function removeSingleCookie(name: string, options?: IRemoveOptions): void {
+    function removeCookie(name: string, options?: IRemoveCookieOptions): void;
+    function removeCookie(args: Array<string | IRemoveCookieProps>): void;
+    function removeCookie(args: string | Array<string | IRemoveCookieProps>, options?: IRemoveCookieOptions): void {
+        function removeSingleCookie(name: string, options?: IRemoveCookieOptions): void {
             const { path, domain } = options || {};
             document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT${path ? `; path=${path}` : ''}${domain ? `; domain=${domain}` : ''}`;
         }
 
         if (typeof args === 'string') {
             removeSingleCookie(args, options);
+            setValues(getCookie(names));
         } else if (Array.isArray(args)) {
-            args.forEach(options => {
-                removeSingleCookie(options.name, options);
+            args.forEach(item => {
+                if (typeof item === 'object') {
+                    removeSingleCookie(item.name, options);
+                } else if (typeof item === 'string') {
+                    removeSingleCookie(item);
+                }
             });
+            setValues(getCookie(names));
         }
     }
 
     /** 清空cookie */
     function clearAllCookies(): void {
-        if (!support || !enabled) return;
-
         const cookies = document.cookie.split("; ");
-
-        for (const cookie of cookies) {
-            const [name] = cookie.split("=");
-            removeCookie(name);
-        }
+        const names = cookies.map(item => item.split("=")[0]);
+        removeCookie(names);
     }
 
-    return {
-        set: setCookie,
-        get: getCookie,
-        remove: removeCookie,
-        clear: clearAllCookies,
-    };
+    return [values, setCookie, removeCookie, clearAllCookies];
 }
 
 export default useCookie;

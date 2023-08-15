@@ -14,13 +14,13 @@ interface ICookieOptions {
     size?: number;
 }
 
-interface IRemoveOptions {
+interface IRemoveCookieOptions {
     path?: string;
     domain?: string;
 }
 
 type SetCookieFunc = (value: string, options?: ICookieOptions) => void;
-type RemoveCookieFunc = (options?: IRemoveOptions) => void;
+type RemoveCookieFunc = (options?: IRemoveCookieOptions) => void;
 
 function formatOptions(options: ICookieOptions): string {
     if (!options) {
@@ -71,17 +71,7 @@ function formatOptions(options: ICookieOptions): string {
 }
 
 function useCookieValue(name: string) {
-    const support = !!(window || document);
-    const enabled = support && window.navigator.cookieEnabled;
     const [value, setValue] = useState<string | null>(getCookie(name));
-
-    if (!support) {
-        throw new Error("Cookie Error: Your browser does not support cookie.");
-    }
-
-    if (!enabled) {
-        console.error("Cookie Error: Your browser has disabled cookie, please enable it in settings.");
-    }
 
     function setCookie(value: string, options?: ICookieOptions): void {
         if (name?.trim().length > 0) {
@@ -94,7 +84,7 @@ function useCookieValue(name: string) {
         return decodeURIComponent(document.cookie).match(new RegExp(`(^| )${name}=([^;]*)(;|$)`))?.[2] || null;
     }
 
-    function removeCookie(options?: IRemoveOptions): void {
+    function removeCookie(options?: IRemoveCookieOptions): void {
         setCookie(name, { ...options, expires: -1 })
     }
 
