@@ -23,7 +23,7 @@ function useThrottle<T extends (...args: any[]) => any>(
     );
   }
 
-  const timerRef = useRef<number | null>(null); // 使用 useRef 存储计时器引用
+  const timerRef = useRef<NodeJS.Timeout | null>(null); // 使用 useRef 存储计时器引用
   const lastExecTimeRef = useRef<number>(0); // 使用 useRef 存储上次执行的时间戳
 
   // 封装回调函数使用 useCallback

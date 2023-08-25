@@ -23,7 +23,7 @@ function useDebounce<T extends (...args: any[]) => any>(
     );
   }
 
-  const timerRef = useRef<number | null>(null); // 使用 useRef 存储计时器
+  const timerRef = useRef<NodeJS.Timeout | null>(null); // 使用 useRef 存储计时器
 
   // 封装回调函数使用 useCallback
   const debounceFunction = useCallback(
