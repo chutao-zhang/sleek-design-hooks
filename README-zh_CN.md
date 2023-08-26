@@ -69,10 +69,10 @@ useCountdown({
 eg.
 
 ```js
-import { useCountdown } from "@sleek-design/hooks";
+import { useCountDown } from "@sleek-design/hooks";
 
 function App() {
-  const { start, pause, reset, stop, remaining } = useCountdown({
+  const { start, pause, reset, stop, remaining } = useCountDown({
     duration: 10 * 1000,
     onFinish: () => {
       console.log("倒计时结束");

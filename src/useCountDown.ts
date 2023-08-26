@@ -9,7 +9,7 @@ interface IUseCountdownProps {
     onFinish?: () => void;
 }
 
-const useCountdown = ({ duration, interval, onFinish }: IUseCountdownProps) => {
+const useCountDown = ({ duration, interval, onFinish }: IUseCountdownProps) => {
     const initialTimeRemaining = Math.max(duration, 0);
     const [remaining, setRemaining] = useState(initialTimeRemaining);
     const [running, setRunning] = useState(false);
@@ -58,4 +58,4 @@ const useCountdown = ({ duration, interval, onFinish }: IUseCountdownProps) => {
     return { remaining, start, pause, reset, stop };
 };
 
-export default useCountdown;
+export default useCountDown;
